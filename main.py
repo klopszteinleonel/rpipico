@@ -20,20 +20,23 @@ import dht, machine
 
 d = dht.DHT11(machine.Pin(15))
 
-def sub_cb(topic, msg, retained):
-    print('Topic = {} -> Valor = {}'.format(topic.decode(), msg.decode()))
+async def messages(client):  # Respond to incoming messages
+    async for topic, msg, retained in client.queue:
+        print((topic, msg, retained))
 
-async def wifi_han(state):
-    print('Wifi is ', 'up' if state else 'down')
-    await asyncio.sleep(1)
+async def up(client):  # Respond to connectivity being (re)established
+    while True:
+        await client.up.wait()  # Wait on an Event
+        client.up.clear()
+        await client.subscribe('foo_topic', 1)  # renew subscriptions
 
-# If you connect with clean_session True, must re-subscribe (MQTT spec 3.1.2.4)
-async def conn_han(client):
-    await client.subscribe('Leo/temperatura', 1)
-    await client.subscribe('Leo/humedad', 1)
 
 async def main(client):
     await client.connect()
+
+    for coroutine in (up, messages):
+        asyncio.create_task(coroutine(client))
+    
     n = 0
     await asyncio.sleep(2)  # Give broker time
     while True:
@@ -54,9 +57,6 @@ async def main(client):
         await asyncio.sleep(20)  # Broker is slow
 
 # Define configuration
-config['subs_cb'] = sub_cb
-config['connect_coro'] = conn_han
-config['wifi_coro'] = wifi_han
 config['ssl'] = True
 
 # Set up client
