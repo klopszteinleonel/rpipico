@@ -38,7 +38,7 @@ async def main(client):
         asyncio.create_task(coroutine(client))
     
     n = 0
-    await asyncio.sleep(2)  # Give broker time
+    await asyncio.sleep(3)  # Give broker time
     while True:
         try:
             d.measure()
@@ -58,6 +58,7 @@ async def main(client):
 
 # Define configuration
 config['ssl'] = True
+config["queue_len"] = 1  # Use event interface with default queue size
 
 # Set up client
 MQTTClient.DEBUG = True  # Optional
