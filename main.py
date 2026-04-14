@@ -20,6 +20,7 @@ import dht, machine
 import ujson
 import network
 import ubinascii
+from led_async import LED_async
 
 # 1. Obtenemos la MAC para el tópico (dinámico)
 wlan = network.WLAN(network.STA_IF)
@@ -32,10 +33,17 @@ setpoint = 10
 periodo = 5
 modos = ['AUTO', 'MAN']
 modo = modos[0]
+led_board = Pin("LED", Pin.OUT)
+led = LED_async(led_board)
+
 
 async def messages(client):  # Respond to incoming messages
     async for topic, msg, retained in client.queue:
-        print((topic, msg, retained))
+
+        if(topic.decode() == f'{mac_id}/destello'):
+            led.flash(0.7 + n/4)
+        
+        print(f"Guardado -> Topico: {topic.decode()}, Valor: {msg.decode()}")
 
 async def up(client):  # Respond to connectivity being (re)established
     while True:
